@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spare Staff Cards Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg-body: #f3f4f6;
+      --bg-card: #ffffff;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --radius: 0.5rem;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: var(--shadow-sm);
+    }
+
+    h1 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background-color: var(--primary); color: white; }
+    .btn-primary:hover { background-color: var(--primary-hover); }
+    
+    .btn-outline { background-color: white; border-color: var(--border); color: var(--text-main); }
+    .btn-outline:hover { background-color: #f9fafb; }
+
+    .btn-danger { background-color: white; border-color: var(--border); color: var(--danger); }
+    .btn-danger:hover { background-color: #fef2f2; border-color: var(--danger); }
+
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+
+    /* Main Layout */
+    main {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      display: grid;
+      gap: 2rem;
+    }
+
+    /* Tap Mode Section */
+    .tap-mode-container {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .tap-status {
+      margin-top: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      display: none;
+      padding: 0.5rem 1rem;
+      background: #e0e7ff;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+    }
+
+    .tap-status.active { display: inline-block; }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: #f9fafb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-title { font-size: 1rem; font-weight: 600; color: var(--text-main); }
+    .badge {
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-gray { background: #e5e7eb; color: var(--text-muted); }
+
+    .panel-body { padding: 1.5rem; min-height: 200px; }
+
+    /* Cards List */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .staff-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .staff-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+      border-color: var(--primary);
+    }
+
+    .staff-card.overdue {
+      border-color: var(--warning);
+      background-color: #fffbeb;
+    }
+    .staff-card.overdue .assigned-time {
+      color: #b45309;
+      font-weight: 600;
+    }
+    
+    .staff-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .card-name { font-weight: 600; font-size: 1rem; }
+    .card-uid { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; }
+    
+    .card-status {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+    .status-available { background-color: var(--success); }
+    .status-assigned { background-color: var(--warning); }
+
+    .assigned-info {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+    .assigned-to { font-weight: 500; display: block; }
+    .assigned-time { color: var(--text-muted); font-size: 0.75rem; }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 50;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.show { display: flex; }
+
+    .modal-content {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body { padding: 1.5rem; }
+
+    .close-btn { font-size: 1.5rem; cursor: pointer; color: var(--text-muted); line-height: 1; }
+    .close-btn:hover { color: var(--text-main); }
+
+    .manage-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    
+    .manage-item {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.75rem;
+      background: #f9fafb;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .manage-item input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+    }
+
+    .add-card-form {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    
+    .form-group { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+    .form-input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    /* Logs Table */
+    .logs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .logs-table th, .logs-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .logs-table th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .logs-table tr:last-child td {
+      border-bottom: none;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+        <rect x="3" y="4" width="18" height="16" rx="2"/>
+        <line x1="7" y1="8" x2="17" y2="8"/>
+        <line x1="7" y1="12" x2="17" y2="12"/>
+        <line x1="7" y1="16" x2="12" y2="16"/>
+      </svg>
+      <h1>Spare Staff Cards</h1>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="btn btn-outline" onclick="showLogsModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        View Logs
+      </button>
+      <button class="btn btn-outline" onclick="showManageModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        Manage Cards
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Tap Mode Hero -->
+    <div class="tap-mode-container">
+      <h2 style="margin-bottom: 1rem; font-size: 1.5rem;">Quick Actions</h2>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem; max-width: 600px;">
+        Activate tap mode to quickly assign or return cards. The system will automatically detect the card status.
+      </p>
+      <button id="tapModeBtn" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem;" onclick="toggleTapMode()">
+        Activate Tap Mode
+      </button>
+      <div id="tapStatus" class="tap-status">
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="width: 8px; height: 8px; background: currentColor; border-radius: 50%; animation: pulse 2s infinite;"></span>
+          Listening for card tap...
+        </span>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <!-- Available Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Available Cards</span>
+          <span class="badge badge-gray" id="availableCount">0</span>
+        </div>
+        <div class="panel-body">
+          <div id="availableCards" class="card-grid"></div>
+        </div>
+      </div>
+
+      <!-- Assigned Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Assigned Cards</span>
+          <span class="badge badge-gray" id="assignedCount">0</span>
+        </div>
+        <div class="panel-body">
+          <div id="assignedCards" class="card-grid"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Manage Modal -->
+  <div id="manageModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 style="font-size: 1.25rem;">Manage Cards</h2>
+        <span class="close-btn" onclick="hideManageModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Normal Manage View -->
+        <div id="manageView">
+          <div style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
+             <button class="btn btn-outline" onclick="startEnrolMode()">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+               </svg>
+               Bulk Enrol Mode
+             </button>
+          </div>
+          <div id="cardsList" class="manage-list"></div>
+          
+          <div class="add-card-form">
+            <h3 style="font-size: 1rem; margin-bottom: 1rem;">Add New Card</h3>
+            <div class="form-group">
+              <input type="text" id="newCardUid" class="form-input" placeholder="Card UID (e.g. 123456)">
+              <input type="text" id="newCardName" class="form-input" placeholder="Display Name (e.g. Spare 1)">
+            </div>
+            <button class="btn btn-primary" style="width: 100%" onclick="addCard()">Add Card</button>
+          </div>
+        </div>
+
+        <!-- Enrol Mode View -->
+        <div id="enrolView" style="display: none; text-align: center; padding: 2rem 0;">
+          <div style="margin-bottom: 2rem;">
+            <div id="enrolStatusIcon" style="font-size: 3rem; margin-bottom: 1rem;">📡</div>
+            <h3 id="enrolStatusText" style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Waiting for card tap...</h3>
+            <p id="enrolUidDisplay" style="font-family: monospace; color: var(--primary); font-size: 1.5rem; font-weight: 700; min-height: 2.25rem; margin: 0.5rem 0;">-</p>
+          </div>
+          
+          <div style="max-width: 320px; margin: 0 auto;">
+            <input type="text" id="enrolNameInput" class="form-input" placeholder="Enter Card Name" style="margin-bottom: 1rem; text-align: center; font-size: 1.1rem; padding: 0.75rem;" onkeydown="handleEnrolNameKey(event)" disabled>
+            <button id="enrolSaveBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 0.75rem; padding: 0.75rem;" onclick="saveEnrolCard()" disabled>Save & Scan Next</button>
+            <button class="btn btn-outline" style="width: 100%;" onclick="stopEnrolMode()">Finish</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Logs Modal -->
+  <div id="logsModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 style="font-size: 1.25rem;">Assignment Logs</h2>
+        <span class="close-btn" onclick="hideLogsModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
+          <button class="btn btn-outline" onclick="exportLogsToCSV()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export to CSV
+          </button>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto;">
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Card Name</th>
+                <th>UID</th>
+                <th>Assigned To</th>
+                <th>Assigned At</th>
+                <th>Returned At</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Input for Tap -->
+  <input type="text" id="tapInput" style="position: absolute; left: -9999px; opacity: 0;" onkeydown="handleTap(event)">
+
+  <style>
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+  </style>
+
+  <script>
+    async function loadData() {
+      const availableRes = await fetch('/api/cards/available');
+      const available = await availableRes.json();
+      const assignedRes = await fetch('/api/cards/assigned');
+      const assigned = await assignedRes.json();
+
+      // Update counts
+      document.getElementById('availableCount').textContent = available.length;
+      document.getElementById('assignedCount').textContent = assigned.length;
+
+      // Render Available
+      const availableDiv = document.getElementById('availableCards');
+      availableDiv.innerHTML = '';
+      if (available.length === 0) {
+        availableDiv.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">No cards available</p>';
+      }
+      available.forEach(card => {
+        const div = document.createElement('div');
+        div.className = 'staff-card';
+        div.innerHTML = `
+          <div class="staff-card-header">
+            <span class="card-name">${card.name}</span>
+            <span class="card-status status-available" title="Available"></span>
+          </div>
+          <div class="card-uid">UID: ${card.uid}</div>
+        `;
+        availableDiv.appendChild(div);
+      });
+
+      // Render Assigned
+      const assignedDiv = document.getElementById('assignedCards');
+      assignedDiv.innerHTML = '';
+      if (assigned.length === 0) {
+        assignedDiv.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">No cards assigned</p>';
+      }
+      assigned.forEach(assignment => {
+        const div = document.createElement('div');
+        div.className = 'staff-card';
+        
+        // Check if overdue (8 hours = 8 * 60 * 60 * 1000 ms)
+        const assignedTime = new Date(assignment.assigned_at).getTime();
+        const now = new Date().getTime();
+        const isOverdue = (now - assignedTime) > (8 * 60 * 60 * 1000);
+        
+        if (isOverdue) {
+          div.classList.add('overdue');
+        }
+
+        div.innerHTML = `
+          <div class="staff-card-header">
+            <span class="card-name">${assignment.name}</span>
+            <span class="card-status status-assigned" title="Assigned"></span>
+          </div>
+          <div class="assigned-info">
+            <span class="assigned-to">${assignment.staff_name}</span>
+            <span class="assigned-time">
+              ${new Date(assignment.assigned_at).toLocaleString()}
+              ${isOverdue ? '<br><span style="color: var(--warning); font-size: 0.75rem;">⚠️ Overdue (>8h)</span>' : ''}
+            </span>
+          </div>
+          <button class="btn btn-sm btn-outline" style="margin-top: 0.5rem;" onclick="returnCard(${assignment.id})">Return</button>
+        `;
+        assignedDiv.appendChild(div);
+      });
+    }
+
+    async function returnCard(assignmentId) {
+      await fetch(`/api/return/${assignmentId}`, { method: 'POST' });
+      loadData();
+    }
+
+    // Manage Modal Functions
+    function showManageModal() {
+      loadCardsForManage();
+      document.getElementById('manageModal').classList.add('show');
+    }
+
+    function hideManageModal() {
+      document.getElementById('manageModal').classList.remove('show');
+    }
+
+    async function loadCardsForManage() {
+      const response = await fetch('/api/cards');
+      const cards = await response.json();
+      renderCardsForManage(cards);
+    }
+
+    function renderCardsForManage(cards) {
+      const list = document.getElementById('cardsList');
+      list.innerHTML = '';
+      cards.forEach(card => {
+        const div = document.createElement('div');
+        div.className = 'manage-item';
+        div.innerHTML = `
+          <span style="font-family: monospace; color: var(--text-muted); font-size: 0.75rem;">${card.uid}</span>
+          <input type="text" value="${card.name}" id="name-${card.id}">
+          <button class="btn btn-sm btn-primary" onclick="saveCard(${card.id})">Save</button>
+          ${card.status === 'available' ? `<button class="btn btn-sm btn-danger" onclick="deleteCard(${card.id})">Delete</button>` : '<span class="badge badge-gray">Assigned</span>'}
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    async function saveCard(id) {
+      const name = document.getElementById(`name-${id}`).value;
+      await fetch(`/api/cards/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+      loadCardsForManage();
+      loadData();
+    }
+
+    async function deleteCard(id) {
+      if(!confirm('Are you sure you want to delete this card?')) return;
+      await fetch(`/api/cards/${id}`, { method: 'DELETE' });
+      loadCardsForManage();
+      loadData();
+    }
+
+    async function addCard() {
+      const uid = document.getElementById('newCardUid').value;
+      const name = document.getElementById('newCardName').value;
+      if (!uid || !name) return alert('Enter UID and name');
+      await fetch('/api/cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid, name }) });
+      document.getElementById('newCardUid').value = '';
+      document.getElementById('newCardName').value = '';
+      loadCardsForManage();
+      loadData();
+    }
+
+    // Logs Functions
+    function showLogsModal() {
+      loadLogs();
+      document.getElementById('logsModal').classList.add('show');
+    }
+
+    function hideLogsModal() {
+      document.getElementById('logsModal').classList.remove('show');
+    }
+
+    let currentLogs = [];
+
+    async function loadLogs() {
+      const response = await fetch('/api/logs');
+      currentLogs = await response.json();
+      const tbody = document.getElementById('logsTableBody');
+      tbody.innerHTML = '';
+      
+      if (currentLogs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No logs found</td></tr>';
+        return;
+      }
+
+      currentLogs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${log.card_name}</td>
+          <td style="font-family: monospace;">${log.uid}</td>
+          <td>${log.staff_name}</td>
+          <td>${new Date(log.assigned_at).toLocaleString()}</td>
+          <td>${log.returned_at ? new Date(log.returned_at).toLocaleString() : '<span class="badge badge-gray">Active</span>'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function exportLogsToCSV() {
+      if (currentLogs.length === 0) return showToast('No logs to export', 'error');
+      
+      const headers = ['Card Name', 'UID', 'Assigned To', 'Assigned At', 'Returned At'];
+      const csvContent = [
+        headers.join(','),
+        ...currentLogs.map(log => [
+          `"${log.card_name}"`,
+          `"${log.uid}"`,
+          `"${log.staff_name}"`,
+          `"${new Date(log.assigned_at).toLocaleString()}"`,
+          `"${log.returned_at ? new Date(log.returned_at).toLocaleString() : 'Active'}"`
+        ].join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `assignments_log_${new Date().toISOString().slice(0,10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Tap Logic
+    let tapModeActive = false;
+    let enrolModeActive = false;
+    let currentEnrolUid = null;
+    let refocusInterval = null;
+
+    function toggleTapMode() {
+      tapModeActive = !tapModeActive;
+      const button = document.getElementById('tapModeBtn');
+      const status = document.getElementById('tapStatus');
+      
+      if (tapModeActive) {
+        button.textContent = 'Deactivate Tap Mode';
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-danger');
+        status.classList.add('active');
+        
+        document.getElementById('tapInput').focus();
+        refocusInterval = setInterval(() => {
+          if (document.activeElement !== document.getElementById('tapInput') && !enrolModeActive) {
+            document.getElementById('tapInput').focus();
+          }
+        }, 100);
+      } else {
+        button.textContent = 'Activate Tap Mode';
+        button.classList.add('btn-primary');
+        button.classList.remove('btn-danger');
+        status.classList.remove('active');
+        
+        if (refocusInterval) clearInterval(refocusInterval);
+      }
+    }
+
+    function handleTap(event) {
+      if (event.key === 'Enter') {
+        const uid = document.getElementById('tapInput').value.trim();
+        document.getElementById('tapInput').value = ''; // Clear immediately
+        
+        if (enrolModeActive && uid) {
+          handleEnrolTap(uid);
+        } else if (tapModeActive && uid) {
+          smartTap(uid);
+        }
+      }
+    }
+
+    // Enrol Mode Functions
+    function startEnrolMode() {
+      enrolModeActive = true;
+      document.getElementById('manageView').style.display = 'none';
+      document.getElementById('enrolView').style.display = 'block';
+      
+      // Ensure tap input is focused for scanning
+      if (refocusInterval) clearInterval(refocusInterval);
+      document.getElementById('tapInput').focus();
+      refocusInterval = setInterval(() => {
+        // Only refocus if we are NOT typing in the name input
+        if (document.activeElement !== document.getElementById('tapInput') && 
+            document.activeElement !== document.getElementById('enrolNameInput')) {
+          document.getElementById('tapInput').focus();
+        }
+      }, 100);
+      
+      resetEnrolState();
+    }
+
+    function stopEnrolMode() {
+      enrolModeActive = false;
+      document.getElementById('manageView').style.display = 'block';
+      document.getElementById('enrolView').style.display = 'none';
+      if (refocusInterval) clearInterval(refocusInterval);
+      loadCardsForManage();
+    }
+
+    function resetEnrolState() {
+      currentEnrolUid = null;
+      document.getElementById('enrolUidDisplay').textContent = '-';
+      document.getElementById('enrolStatusText').textContent = 'Waiting for card tap...';
+      document.getElementById('enrolStatusIcon').textContent = '📡';
+      
+      const nameInput = document.getElementById('enrolNameInput');
+      nameInput.value = '';
+      nameInput.disabled = true;
+      document.getElementById('enrolSaveBtn').disabled = true;
+      
+      document.getElementById('tapInput').focus();
+    }
+
+    function handleEnrolTap(uid) {
+      currentEnrolUid = uid;
+      document.getElementById('enrolUidDisplay').textContent = uid;
+      document.getElementById('enrolStatusText').textContent = 'Card Detected!';
+      document.getElementById('enrolStatusIcon').textContent = '✅';
+      
+      const nameInput = document.getElementById('enrolNameInput');
+      nameInput.disabled = false;
+      document.getElementById('enrolSaveBtn').disabled = false;
+      nameInput.focus();
+    }
+
+    function handleEnrolNameKey(event) {
+      if (event.key === 'Enter') {
+        saveEnrolCard();
+      }
+    }
+
+    async function saveEnrolCard() {
+      const name = document.getElementById('enrolNameInput').value.trim();
+      if (!currentEnrolUid || !name) {
+        showToast('Please enter a name', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/cards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid: currentEnrolUid, name })
+        });
+        
+        if (!response.ok) throw new Error('Failed to add card');
+        
+        showToast(`Card "${name}" added! Ready for next.`, 'success');
+        resetEnrolState();
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      }
+    }
+
+    async function smartTap(uid) {
+      try {
+        // First, check status without assigning
+        const checkResponse = await fetch('/api/cards');
+        const cards = await checkResponse.json();
+        let card = cards.find(c => c.uid === uid);
+        
+        if (!card) {
+          if (refocusInterval) clearInterval(refocusInterval);
+          const name = prompt('Card not recognized. Add to list? Enter name:');
+          if (tapModeActive) {
+             document.getElementById('tapInput').focus();
+             refocusInterval = setInterval(() => {
+              if (document.activeElement !== document.getElementById('tapInput')) {
+                document.getElementById('tapInput').focus();
+              }
+            }, 100);
+          }
+          if (!name) return;
+          
+          const addResponse = await fetch('/api/cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid, name })
+          });
+          if (!addResponse.ok) throw new Error('Failed to add card');
+          card = { uid, name, status: 'available' };
+        }
+        
+        let staffName = null;
+        if (card.status === 'available') {
+          if (refocusInterval) clearInterval(refocusInterval);
+          staffName = prompt('Enter staff name for assignment:');
+          if (tapModeActive) {
+             document.getElementById('tapInput').focus();
+             refocusInterval = setInterval(() => {
+              if (document.activeElement !== document.getElementById('tapInput')) {
+                document.getElementById('tapInput').focus();
+              }
+            }, 100);
+          }
+          if (!staffName) return;
+        }
+        
+        const response = await fetch('/api/tap-action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid, staffName })
+        });
+        
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error);
+        
+        showToast(`Card ${result.action === 'assigned' ? 'assigned to ' + staffName : 'returned'}`, 'success');
+        loadData();
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.position = 'fixed';
+      toast.style.bottom = '20px';
+      toast.style.right = '20px';
+      toast.style.padding = '1rem 2rem';
+      toast.style.borderRadius = '0.5rem';
+      toast.style.color = 'white';
+      toast.style.fontWeight = '500';
+      toast.style.zIndex = '100';
+      toast.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+      toast.style.animation = 'slideIn 0.3s ease';
+      
+      if (type === 'success') toast.style.backgroundColor = 'var(--success)';
+      else if (type === 'error') toast.style.backgroundColor = 'var(--danger)';
+      else toast.style.backgroundColor = 'var(--primary)';
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes slideIn {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    loadData();
+  </script>
+</body>
+</html>
