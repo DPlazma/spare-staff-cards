@@ -172,13 +172,12 @@
       border-color: var(--primary);
     }
 
-    .staff-card.overdue {
-      border-color: var(--warning);
-      background-color: #fffbeb;
+    .staff-card.available-clickable {
+      cursor: pointer;
     }
-    .staff-card.overdue .assigned-time {
-      color: #b45309;
-      font-weight: 600;
+    .staff-card.available-clickable:hover {
+      border-color: var(--primary);
+      background-color: #eff6ff;
     }
     
     .staff-card-header {
@@ -497,11 +496,12 @@
       }
       available.forEach(card => {
         const div = document.createElement('div');
-        div.className = 'staff-card';
+        div.className = 'staff-card available-clickable';
+        div.onclick = () => assignCardByClick(card.id, card.name);
         div.innerHTML = `
           <div class="staff-card-header">
             <span class="card-name">${card.name}</span>
-            <span class="card-status status-available" title="Available"></span>
+            <span class="card-status status-available" title="Available - Click to assign"></span>
           </div>
           <div class="card-uid">UID: ${card.uid}</div>
         `;
@@ -605,6 +605,24 @@
       document.getElementById('newCardName').value = '';
       loadCardsForManage();
       loadData();
+    }
+
+    async function assignCardByClick(cardId, cardName) {
+      const staffName = prompt(`Assign "${cardName}" to:`);
+      if (!staffName || !staffName.trim()) return;
+      
+      try {
+        const response = await fetch('/api/assign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cardId: parseInt(cardId), staffName: staffName.trim() })
+        });
+        if (!response.ok) throw new Error('Assignment failed');
+        showToast(`Card "${cardName}" assigned to ${staffName}`, 'success');
+        loadData();
+      } catch (error) {
+        showToast('Error assigning card: ' + error.message, 'error');
+      }
     }
 
     // Logs Functions
